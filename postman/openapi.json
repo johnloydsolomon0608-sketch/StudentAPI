@@ -1,0 +1,361 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Employee Management API",
+    "version": "1.0.0",
+    "description": "Week 3 design \u00b7 Solomon John Loyd A. \u00b7 BSIT-3B. Obtain a token using POST /api/login."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8000/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "schemas": {
+      "EmployeeInput": {
+        "type": "object",
+        "properties": {
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "position": {
+            "type": "string"
+          },
+          "department_id": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "first_name",
+          "last_name",
+          "email",
+          "position",
+          "department_id"
+        ]
+      },
+      "Employee": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/EmployeeInput"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "department": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "paths": {
+    "/employees": {
+      "get": {
+        "summary": "Search and list employees",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "current_page": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Employee"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required"
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "department",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "department_id",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Add employee",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Employee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required"
+          },
+          "422": {
+            "description": "Validation failed"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/employees/{employee}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "employee",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get employee",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Employee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required"
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace employee",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Employee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeInput"
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Edit employee",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Employee"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required"
+          },
+          "422": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "position": {
+                    "type": "string"
+                  },
+                  "department_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete employee",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Bearer token required"
+          },
+          "404": {
+            "description": "Employee not found"
+          }
+        }
+      }
+    }
+  }
+}

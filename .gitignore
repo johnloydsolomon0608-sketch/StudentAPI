@@ -1,0 +1,8 @@
+/vendor/
+/.env
+/setup/composer*.php
+/setup/composer.phar
+/setup/.installed
+/bootstrap/cache/*.php
+/storage/logs/*.log
+/setup/php-conf/
