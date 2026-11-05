@@ -5,17 +5,33 @@ function Run-Php([string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "PHP command failed. Check the error above and run START.cmd again." }
 }
 try {
+    $candidates = @()
     $roots = @($env:XAMPP_HOME, 'C:\php82', 'C:\xampp', 'C:\xamp', 'D:\xampp', 'D:\xamp')
-    $php = $null
     foreach ($root in $roots) {
-        if ($root -and (Test-Path "$root\php\php.exe")) { $php = "$root\php\php.exe"; break }
+        if ($root -and (Test-Path "$root\php\php.exe")) { $candidates += "$root\php\php.exe" }
+        if ($root -and (Test-Path "$root\php.exe")) { $candidates += "$root\php.exe" }
+    }
+    $php = $null
+    $bestVersion = 0
+    foreach ($c in $candidates) {
+        $ver = (& $c -r 'echo PHP_VERSION_ID;' 2>$null)
+        if ($ver -match '^\d+$' -and [int]$ver -ge 80200 -and [int]$ver -gt $bestVersion) {
+            $php = $c; $bestVersion = [int]$ver
+        }
+    }
+    if (!$php) {
+        foreach ($c in $candidates) {
+            $ver = (& $c -r 'echo PHP_VERSION_ID;' 2>$null)
+            if ($ver -match '^\d+$' -and [int]$ver -gt $bestVersion) { $php = $c; $bestVersion = [int]$ver }
+        }
     }
     if (!$php) { $php = (Get-Command php.exe -ErrorAction SilentlyContinue).Source }
     if (!$php) { throw 'PHP missing. Set XAMPP_HOME to your XAMPP folder and reopen VS Code.' }
+    $script:php = $php
     $env:Path = "$(Split-Path $php);$env:Path"
     # Load optional XAMPP modules for this launcher without changing the system php.ini.
     $phpDir = Split-Path $php
-    $modules = @(& $php -m)
+    $modules = @(& $php -m) | ForEach-Object { $_ -replace '^\[|\]$', '' }
     $extra = @()
     foreach ($module in @('zip','mbstring','pdo_mysql','openssl','fileinfo','curl')) {
         if (($modules -notcontains $module) -and (Test-Path "$phpDir\ext\php_$module.dll")) {
@@ -55,7 +71,7 @@ try {
     $port = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback,8000)
     try { $port.Start() } catch { throw 'Port 8000 is busy. Close the older API server, then relaunch.' } finally { $port.Stop() }
     Write-Host 'Ready. Open http://127.0.0.1:8000/api/students or run the Postman collection.'
-    Run-Php @('artisan','serve','--host=127.0.0.1','--port=8000','--tries=1')
+    & $script:php @('-S','127.0.0.1:8000','-t','public')
 } catch {
     Write-Host $_ -ForegroundColor Red
     Write-Host 'Use XAMPP PHP 8.2+, start MySQL, and check DB settings in .env.'
